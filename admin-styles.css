@@ -673,6 +673,122 @@ body {
     color: var(--primary-color);
 }
 
+/* Live News */
+.live-news-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.live-news-form {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.live-news-form h3 {
+    margin-bottom: 20px;
+    color: var(--text-dark);
+    font-size: 1.3rem;
+}
+
+.live-news-list {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.live-news-list h3 {
+    margin-bottom: 20px;
+    color: var(--text-dark);
+    font-size: 1.3rem;
+}
+
+.live-news-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.live-news-item {
+    background: var(--bg-light);
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.live-news-item:hover {
+    box-shadow: var(--shadow);
+    transform: translateX(5px);
+}
+
+.live-news-content {
+    flex: 1;
+    color: var(--text-dark);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.live-news-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+    min-width: 120px;
+}
+
+.live-news-date {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.live-news-delete {
+    background: var(--danger);
+    color: var(--white);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.live-news-delete:hover {
+    background: #c82333;
+    transform: scale(1.05);
+}
+
+.live-news-delete:active {
+    transform: scale(0.95);
+}
+
+.live-news-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.live-news-limit-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #ffc107;
+    font-size: 0.9rem;
+}
+
 /* Settings */
 .settings-container {
     background: var(--white);
@@ -1209,6 +1325,17 @@ body {
     /* Genre list */
     .genres-list {
         grid-template-columns: 1fr;
+    }
+
+    /* Live News */
+    .live-news-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .live-news-form,
+    .live-news-list {
+        padding: 20px 15px;
     }
 }
 
