@@ -89,6 +89,12 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#" class="menu-link" data-section="liveNews">
+                        <i class="fas fa-broadcast-tower"></i>
+                        <span>Live News</span>
+                    </a>
+                </li>
+                <li>
                     <a href="#" class="menu-link" data-section="reporters">
                         <i class="fas fa-users"></i>
                         <span>Reporter Applications</span>
@@ -284,6 +290,40 @@
                         </thead>
                         <tbody id="reportersTableBody"></tbody>
                     </table>
+                </div>
+            </section>
+
+            <section id="liveNewsSection" class="section">
+                <h2 class="page-title">Live News - Breaking News Snippets</h2>
+                <div class="live-news-container">
+                    <div class="live-news-form">
+                        <h3>Add Breaking News</h3>
+                        <form id="liveNewsForm">
+                            <div class="form-group full-width">
+                                <label>Breaking News Snippet *</label>
+                                <textarea 
+                                    id="liveNewsText" 
+                                    rows="3" 
+                                    maxlength="300" 
+                                    placeholder="Enter breaking news snippet (max 300 characters)"
+                                    required
+                                ></textarea>
+                                <div class="char-count">
+                                    <span id="liveNewsCharCount">0</span> / 300 characters
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" id="addLiveNewsBtn">
+                                <i class="fas fa-plus"></i> Add Breaking News
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="live-news-list">
+                        <h3>Current Breaking News (Max 5)</h3>
+                        <div id="liveNewsList" class="live-news-items">
+                            <p style="text-align: center; color: #666; padding: 20px;">Loading...</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
