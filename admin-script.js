@@ -156,6 +156,8 @@ function showSection(sectionName) {
         if (!editMode && !articleId) {
             resetArticleForm();
         }
+    } else if (sectionName === 'liveNews') {
+        loadLiveNews();
     }
 }
 
@@ -832,6 +834,112 @@ async function handleSettingsSubmit(e) {
     }
 }
 
+// Live News Functions
+async function loadLiveNews() {
+    try {
+        const liveNewsSnapshot = await db.collection('liveNews')
+            .orderBy('createdAt', 'desc')
+            .limit(5)
+            .get();
+        
+        const liveNewsList = document.getElementById('liveNewsList');
+        liveNewsList.innerHTML = '';
+        
+        if (liveNewsSnapshot.empty) {
+            liveNewsList.innerHTML = '<p class="live-news-empty">No breaking news snippets yet. Add one above!</p>';
+            return;
+        }
+        
+        const items = [];
+        liveNewsSnapshot.forEach(doc => {
+            items.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Check if we have 5 items and show warning
+        if (items.length >= 5) {
+            const warning = document.createElement('div');
+            warning.className = 'live-news-limit-warning';
+            warning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Maximum limit of 5 breaking news snippets reached. Delete one to add a new one.';
+            liveNewsList.appendChild(warning);
+        }
+        
+        items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'live-news-item';
+            itemDiv.innerHTML = `
+                <div class="live-news-content">${item.text}</div>
+                <div class="live-news-meta">
+                    <div class="live-news-date">${formatDate(item.createdAt)}</div>
+                    <button class="live-news-delete" onclick="deleteLiveNews('${item.id}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+            liveNewsList.appendChild(itemDiv);
+        });
+        
+    } catch (error) {
+        console.error('Error loading live news:', error);
+        document.getElementById('liveNewsList').innerHTML = 
+            '<p class="live-news-empty">Error loading breaking news snippets.</p>';
+    }
+}
+
+async function handleLiveNewsSubmit(e) {
+    e.preventDefault();
+    
+    const text = document.getElementById('liveNewsText').value.trim();
+    
+    if (!text) {
+        alert('Please enter a breaking news snippet');
+        return;
+    }
+    
+    if (text.length > 300) {
+        alert('Breaking news snippet cannot exceed 300 characters');
+        return;
+    }
+    
+    try {
+        // Check current count
+        const currentSnapshot = await db.collection('liveNews').get();
+        if (currentSnapshot.size >= 5) {
+            alert('Maximum limit of 5 breaking news snippets reached. Please delete one before adding a new one.');
+            return;
+        }
+        
+        // Add new snippet
+        await db.collection('liveNews').add({
+            text: text,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert('Breaking news snippet added successfully!');
+        document.getElementById('liveNewsForm').reset();
+        document.getElementById('liveNewsCharCount').textContent = '0';
+        loadLiveNews();
+        
+    } catch (error) {
+        console.error('Error adding live news:', error);
+        alert('Error adding breaking news snippet: ' + error.message);
+    }
+}
+
+async function deleteLiveNews(id) {
+    if (!confirm('Are you sure you want to delete this breaking news snippet?')) {
+        return;
+    }
+    
+    try {
+        await db.collection('liveNews').doc(id).delete();
+        alert('Breaking news snippet deleted successfully!');
+        loadLiveNews();
+    } catch (error) {
+        console.error('Error deleting live news:', error);
+        alert('Error deleting breaking news snippet: ' + error.message);
+    }
+}
+
 function formatDate(timestamp) {
     if (!timestamp) return 'N/A';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -970,6 +1078,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('genreForm').addEventListener('submit', handleGenreSubmit);
     document.getElementById('settingsForm').addEventListener('submit', handleSettingsSubmit);
+    
+    // Live News
+    document.getElementById('liveNewsForm').addEventListener('submit', handleLiveNewsSubmit);
+    document.getElementById('liveNewsText').addEventListener('input', (e) => {
+        document.getElementById('liveNewsCharCount').textContent = e.target.value.length;
+    });
     
     document.getElementById('closeViewModal').addEventListener('click', () => {
         document.getElementById('viewModal').classList.remove('active');
