@@ -158,6 +158,8 @@ function showSection(sectionName) {
         }
     } else if (sectionName === 'liveNews') {
         loadLiveNews();
+    } else if (sectionName === 'viewsLikes') {
+        loadViewsLikes();
     }
 }
 
@@ -368,12 +370,26 @@ async function handleArticleSubmit(e, isDraft = false) {
                 articleData.publishedDate = existingData.publishedDate;
             }
             
+            // Preserve views and likes if they exist, otherwise set defaults
+            if (existingData.views !== undefined) {
+                articleData.views = existingData.views;
+            } else {
+                articleData.views = 0;
+            }
+            if (existingData.likes !== undefined) {
+                articleData.likes = existingData.likes;
+            } else {
+                articleData.likes = 0;
+            }
+            
             await db.collection('articles').doc(articleId).update(articleData);
             alert('Article updated successfully!');
             // Reload drafts after update
             loadDrafts();
         } else {
-            // Creating new article
+            // Creating new article - initialize views and likes to 0
+            articleData.views = 0;
+            articleData.likes = 0;
             articleData.publishedDate = firebase.firestore.FieldValue.serverTimestamp();
             articleData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await db.collection('articles').add(articleData);
@@ -944,6 +960,225 @@ function formatDate(timestamp) {
     if (!timestamp) return 'N/A';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleString('en-IN');
+}
+
+// Views & Likes Management Functions
+async function loadViewsLikes() {
+    try {
+        const articlesSnapshot = await db.collection('articles')
+            .where('status', '==', 'published')
+            .get();
+        
+        // Convert to array and sort manually
+        const articles = [];
+        articlesSnapshot.forEach(doc => {
+            articles.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Sort by publishedDate descending
+        articles.sort((a, b) => {
+            const aTime = a.publishedDate ? a.publishedDate.toMillis() : 0;
+            const bTime = b.publishedDate ? b.publishedDate.toMillis() : 0;
+            return bTime - aTime;
+        });
+        
+        const tbody = document.getElementById('viewsLikesTableBody');
+        tbody.innerHTML = '';
+        
+        articles.forEach(article => {
+            const views = article.views !== undefined ? article.views : 0;
+            const likes = article.likes !== undefined ? article.likes : 0;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${article.title}</td>
+                <td>${article.genre}</td>
+                <td>
+                    <input type="number" 
+                           class="editable-number" 
+                           value="${views}" 
+                           min="0"
+                           data-article-id="${article.id}"
+                           data-field="views"
+                           onchange="updateViewsLikes('${article.id}', 'views', this.value)">
+                </td>
+                <td>
+                    <input type="number" 
+                           class="editable-number" 
+                           value="${likes}" 
+                           min="0"
+                           data-article-id="${article.id}"
+                           data-field="likes"
+                           onchange="updateViewsLikes('${article.id}', 'likes', this.value)">
+                </td>
+                <td>${formatDate(article.publishedDate)}</td>
+                <td>
+                    <button class="action-btn edit" onclick="editArticle('${article.id}')" title="Edit Article">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        if (articles.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">No articles found</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading views and likes:', error);
+    }
+}
+
+async function updateViewsLikes(articleId, field, value) {
+    try {
+        const numValue = parseInt(value, 10);
+        if (isNaN(numValue) || numValue < 0) {
+            alert('Please enter a valid number (0 or greater)');
+            // Reload to reset the value
+            loadViewsLikes();
+            return;
+        }
+        
+        await db.collection('articles').doc(articleId).update({
+            [field]: numValue,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Show success feedback (optional - you can remove this if too noisy)
+        // console.log(`${field} updated successfully for article ${articleId}`);
+    } catch (error) {
+        console.error(`Error updating ${field}:`, error);
+        alert(`Error updating ${field}: ` + error.message);
+        // Reload to reset the value
+        loadViewsLikes();
+    }
+}
+
+async function assignRandomViews() {
+    if (!confirm('This will assign random views (100-500) to all articles that don\'t have views set. Continue?')) {
+        return;
+    }
+    
+    try {
+        const articlesSnapshot = await db.collection('articles')
+            .where('status', '==', 'published')
+            .get();
+        
+        const batch = db.batch();
+        let count = 0;
+        
+        articlesSnapshot.forEach(doc => {
+            const article = doc.data();
+            // Only update articles that don't have views field or have undefined views
+            if (article.views === undefined || article.views === null) {
+                const randomViews = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+                batch.update(doc.ref, {
+                    views: randomViews,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            }
+        });
+        
+        if (count > 0) {
+            await batch.commit();
+            alert(`Random views assigned to ${count} article(s)!`);
+            loadViewsLikes();
+        } else {
+            alert('All articles already have views assigned.');
+        }
+    } catch (error) {
+        console.error('Error assigning random views:', error);
+        alert('Error assigning random views: ' + error.message);
+    }
+}
+
+async function assignRandomLikes() {
+    if (!confirm('This will assign random likes (1-100) to all articles that don\'t have likes set. Continue?')) {
+        return;
+    }
+    
+    try {
+        const articlesSnapshot = await db.collection('articles')
+            .where('status', '==', 'published')
+            .get();
+        
+        const batch = db.batch();
+        let count = 0;
+        
+        articlesSnapshot.forEach(doc => {
+            const article = doc.data();
+            // Only update articles that don't have likes field or have undefined likes
+            if (article.likes === undefined || article.likes === null) {
+                const randomLikes = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
+                batch.update(doc.ref, {
+                    likes: randomLikes,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            }
+        });
+        
+        if (count > 0) {
+            await batch.commit();
+            alert(`Random likes assigned to ${count} article(s)!`);
+            loadViewsLikes();
+        } else {
+            alert('All articles already have likes assigned.');
+        }
+    } catch (error) {
+        console.error('Error assigning random likes:', error);
+        alert('Error assigning random likes: ' + error.message);
+    }
+}
+
+async function assignRandomBoth() {
+    if (!confirm('This will assign random views (100-500) and likes (1-100) to all articles that don\'t have these fields set. Continue?')) {
+        return;
+    }
+    
+    try {
+        const articlesSnapshot = await db.collection('articles')
+            .where('status', '==', 'published')
+            .get();
+        
+        const batch = db.batch();
+        let count = 0;
+        
+        articlesSnapshot.forEach(doc => {
+            const article = doc.data();
+            const needsViews = article.views === undefined || article.views === null;
+            const needsLikes = article.likes === undefined || article.likes === null;
+            
+            if (needsViews || needsLikes) {
+                const updateData = {
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (needsViews) {
+                    updateData.views = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+                }
+                
+                if (needsLikes) {
+                    updateData.likes = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
+                }
+                
+                batch.update(doc.ref, updateData);
+                count++;
+            }
+        });
+        
+        if (count > 0) {
+            await batch.commit();
+            alert(`Random views and likes assigned to ${count} article(s)!`);
+            loadViewsLikes();
+        } else {
+            alert('All articles already have views and likes assigned.');
+        }
+    } catch (error) {
+        console.error('Error assigning random views and likes:', error);
+        alert('Error assigning random views and likes: ' + error.message);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
