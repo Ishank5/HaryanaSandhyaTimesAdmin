@@ -214,6 +214,16 @@ async function loadDashboard() {
         
         const genresSnapshot = await db.collection('genres').get();
         document.getElementById('totalGenres').textContent = genresSnapshot.size;
+        
+        // Load total website visits
+        const statsDoc = await db.collection('stats').doc('website').get();
+        if (statsDoc.exists) {
+            const stats = statsDoc.data();
+            const totalVisits = stats.totalVisits || 0;
+            document.getElementById('totalVisits').textContent = totalVisits.toLocaleString();
+        } else {
+            document.getElementById('totalVisits').textContent = '0';
+        }
     } catch (error) {
         console.error('Error loading dashboard:', error);
     }
