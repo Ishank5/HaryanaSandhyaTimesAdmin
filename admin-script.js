@@ -658,14 +658,21 @@ async function loadGenres() {
             div.className = 'genre-item';
             // Use saved icon if available, otherwise auto-assign
             const icon = genre.icon || getGenreIcon(genre.name);
+            const iconEscaped = icon.replace(/"/g, '&quot;').replace(/'/g, "&#39;");
+            const nameEscaped = genre.name.replace(/"/g, '&quot;').replace(/'/g, "&#39;");
             div.innerHTML = `
                 <div class="genre-info">
                     <i class="${icon}"></i>
                     <span>${genre.name}</span>
                 </div>
-                <button class="action-btn delete" onclick="deleteGenre('${doc.id}')">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <div style="display: flex; gap: 5px;">
+                    <button class="action-btn edit" onclick="editGenre('${doc.id}', '${nameEscaped}', '${iconEscaped}')" title="Edit Icon">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn delete" onclick="deleteGenre('${doc.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             `;
             container.appendChild(div);
         });
@@ -696,8 +703,8 @@ const commonIcons = [
 ];
 
 // Initialize icon selector
-function initializeIconSelector() {
-    const iconGrid = document.getElementById('iconGrid');
+function initializeIconSelector(containerId = 'iconGrid') {
+    const iconGrid = document.getElementById(containerId);
     if (!iconGrid) return;
     
     iconGrid.innerHTML = '';
@@ -706,43 +713,60 @@ function initializeIconSelector() {
         iconDiv.className = 'icon-option';
         iconDiv.innerHTML = `<i class="${icon}"></i>`;
         iconDiv.setAttribute('data-icon', icon);
-        iconDiv.onclick = () => selectIcon(icon);
         iconGrid.appendChild(iconDiv);
     });
 }
 
-function toggleIconSelector() {
-    const selector = document.getElementById('iconSelector');
-    const preview = document.getElementById('iconPreview');
+function toggleIconSelector(selectorElement = null) {
+    const selector = selectorElement || document.getElementById('iconSelector');
+    if (!selector) return;
     
-    if (selector.style.display === 'none') {
+    const iconGrid = selector.querySelector('.icon-grid') || selector.querySelector('#iconGrid');
+    if (!iconGrid) return;
+    
+    if (selector.style.display === 'none' || !selector.style.display) {
         selector.style.display = 'block';
-        if (!document.getElementById('iconGrid').innerHTML) {
-            initializeIconSelector();
+        if (!iconGrid.innerHTML) {
+            initializeIconSelector(iconGrid.id || 'iconGrid');
         }
     } else {
         selector.style.display = 'none';
     }
 }
 
-function selectIcon(icon) {
-    document.getElementById('selectedIcon').value = icon;
-    const preview = document.getElementById('iconPreview');
-    const previewIcon = document.getElementById('selectedIconPreview');
+function selectIcon(icon, wrapperElement) {
+    if (!wrapperElement) return;
     
-    previewIcon.className = icon;
-    preview.style.display = 'inline-block';
+    const targetInput = wrapperElement.querySelector('input[type="hidden"]');
+    const targetPreview = wrapperElement.querySelector('.icon-preview');
+    const targetPreviewIcon = wrapperElement.querySelector('.icon-preview i');
+    const selector = wrapperElement.querySelector('.icon-selector');
     
-    toggleIconSelector();
+    if (targetInput) {
+        targetInput.value = icon;
+        if (targetPreview && targetPreviewIcon) {
+            targetPreviewIcon.className = icon;
+            targetPreview.style.display = 'inline-block';
+        }
+    }
+    if (selector) {
+        selector.style.display = 'none';
+    }
 }
 
-function filterIcons() {
-    const searchTerm = document.getElementById('iconSearch').value.toLowerCase();
-    const iconOptions = document.querySelectorAll('.icon-option');
+function filterIcons(searchInput) {
+    if (!searchInput) return;
+    const searchTerm = searchInput.value.toLowerCase();
+    const iconSelector = searchInput.closest('.icon-selector');
+    if (!iconSelector) return;
     
+    const iconGrid = iconSelector.querySelector('.icon-grid') || iconSelector.querySelector('#iconGrid');
+    if (!iconGrid) return;
+    
+    const iconOptions = iconGrid.querySelectorAll('.icon-option');
     iconOptions.forEach(option => {
         const icon = option.getAttribute('data-icon');
-        if (icon.toLowerCase().includes(searchTerm)) {
+        if (icon && icon.toLowerCase().includes(searchTerm)) {
             option.style.display = 'block';
         } else {
             option.style.display = 'none';
@@ -768,6 +792,134 @@ async function handleGenreSubmit(e) {
     } catch (error) {
         console.error('Error adding genre:', error);
         alert('Error adding genre');
+    }
+}
+
+async function editGenre(genreId, genreName, currentIcon) {
+    // Show icon selector modal directly
+    showIconSelectorModal(genreId, genreName, currentIcon);
+}
+
+function showIconSelectorModal(genreId, genreName, currentIcon) {
+    // Create a modal for icon selection
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'genreIconModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Select Icon for "${genreName}"</h3>
+                <button class="modal-close" id="closeGenreIconModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="icon-selector-wrapper" style="position: relative;">
+                    <div class="current-icon-preview" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                        <p style="margin: 0 0 10px 0; color: #666;">Current Icon:</p>
+                        <i class="${currentIcon}" id="currentIconPreview" style="font-size: 2rem; color: var(--primary-color);"></i>
+                    </div>
+                    <div class="icon-selector" style="position: relative; display: block;">
+                        <div class="icon-selector-header">
+                            <input type="text" id="modalIconSearch" placeholder="Search icons..." style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;">
+                            <button type="button" class="icon-selector-close" id="closeGenreIconModalBtn2">&times;</button>
+                        </div>
+                        <div class="icon-grid" id="modalIconGrid"></div>
+                    </div>
+                    <input type="hidden" id="modalSelectedIcon" value="${currentIcon}">
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn-secondary" id="cancelGenreIconBtn">Cancel</button>
+                    <button class="btn-primary" id="saveGenreIconBtn">Save Icon</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Initialize icon grid
+    initializeIconSelector('modalIconGrid');
+    
+    // Setup icon selection
+    const iconGrid = document.getElementById('modalIconGrid');
+    iconGrid.addEventListener('click', (e) => {
+        const iconOption = e.target.closest('.icon-option');
+        if (iconOption) {
+            const icon = iconOption.getAttribute('data-icon');
+            document.getElementById('modalSelectedIcon').value = icon;
+            
+            // Update preview
+            const preview = document.getElementById('currentIconPreview');
+            if (preview) {
+                preview.className = icon;
+            }
+            
+            // Highlight selected
+            iconGrid.querySelectorAll('.icon-option').forEach(opt => {
+                opt.style.borderColor = 'var(--border-color)';
+                opt.style.background = '';
+            });
+            iconOption.style.borderColor = 'var(--primary-color)';
+            iconOption.style.background = 'rgba(255, 15, 34, 0.1)';
+        }
+    });
+    
+    // Setup search
+    const searchInput = document.getElementById('modalIconSearch');
+    searchInput.addEventListener('input', (e) => {
+        filterIcons(e.target);
+    });
+    
+    // Setup close buttons
+    document.getElementById('closeGenreIconModalBtn').addEventListener('click', closeGenreIconModal);
+    document.getElementById('closeGenreIconModalBtn2').addEventListener('click', closeGenreIconModal);
+    document.getElementById('cancelGenreIconBtn').addEventListener('click', closeGenreIconModal);
+    
+    // Setup save button
+    document.getElementById('saveGenreIconBtn').addEventListener('click', () => {
+        saveGenreIcon(genreId);
+    });
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeGenreIconModal();
+        }
+    });
+    
+    // Highlight current icon
+    setTimeout(() => {
+        const currentOption = iconGrid.querySelector(`[data-icon="${currentIcon}"]`);
+        if (currentOption) {
+            currentOption.style.borderColor = 'var(--primary-color)';
+            currentOption.style.background = 'rgba(255, 15, 34, 0.1)';
+        }
+    }, 100);
+}
+
+async function saveGenreIcon(genreId) {
+    const selectedIcon = document.getElementById('modalSelectedIcon').value;
+    if (!selectedIcon) {
+        alert('Please select an icon');
+        return;
+    }
+    
+    try {
+        await db.collection('genres').doc(genreId).update({
+            icon: selectedIcon
+        });
+        alert('Genre icon updated successfully!');
+        closeGenreIconModal();
+        loadGenres();
+        loadGenresForSelect();
+    } catch (error) {
+        console.error('Error updating genre icon:', error);
+        alert('Error updating genre icon');
+    }
+}
+
+function closeGenreIconModal() {
+    const modal = document.getElementById('genreIconModal');
+    if (modal) {
+        modal.remove();
     }
 }
 
@@ -1493,15 +1645,51 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('genreForm').addEventListener('submit', handleGenreSubmit);
     
-    // Initialize icon selector
-    initializeIconSelector();
+    // Setup icon selector for new genre form
+    const iconSelectorBtn = document.getElementById('iconSelectorBtn');
+    const iconSelector = document.getElementById('iconSelector');
+    const iconSearch = document.getElementById('iconSearch');
+    const iconClose = iconSelector?.querySelector('.icon-selector-close');
+    
+    if (iconSelectorBtn && iconSelector) {
+        iconSelectorBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleIconSelector(iconSelector);
+        });
+        
+        if (iconClose) {
+            iconClose.addEventListener('click', () => {
+                iconSelector.style.display = 'none';
+            });
+        }
+        
+        if (iconSearch) {
+            iconSearch.addEventListener('input', (e) => {
+                filterIcons(e.target);
+            });
+        }
+        
+        // Initialize icon grid
+        initializeIconSelector('iconGrid');
+        
+        // Setup icon selection
+        const iconGrid = document.getElementById('iconGrid');
+        if (iconGrid) {
+            iconGrid.addEventListener('click', (e) => {
+                const iconOption = e.target.closest('.icon-option');
+                if (iconOption) {
+                    const icon = iconOption.getAttribute('data-icon');
+                    const wrapper = iconSelector.closest('.icon-selector-wrapper');
+                    selectIcon(icon, wrapper);
+                }
+            });
+        }
+    }
     
     // Close icon selector when clicking outside
     document.addEventListener('click', (e) => {
-        const selector = document.getElementById('iconSelector');
-        const btn = document.getElementById('iconSelectorBtn');
-        if (selector && !selector.contains(e.target) && !btn.contains(e.target)) {
-            selector.style.display = 'none';
+        if (iconSelector && !iconSelector.contains(e.target) && !iconSelectorBtn.contains(e.target)) {
+            iconSelector.style.display = 'none';
         }
     });
     document.getElementById('settingsForm').addEventListener('submit', handleSettingsSubmit);
