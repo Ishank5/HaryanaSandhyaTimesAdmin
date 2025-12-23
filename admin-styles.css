@@ -690,6 +690,134 @@ body {
     box-shadow: var(--shadow);
 }
 
+.genre-form .form-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.genre-form .form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.icon-selector-wrapper {
+    position: relative;
+}
+
+.icon-selector-btn {
+    padding: 12px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    width: 100%;
+    justify-content: center;
+}
+
+.icon-selector-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(255, 15, 34, 0.05);
+}
+
+.icon-preview {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.icon-selector {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 5px;
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-hover);
+    z-index: 1000;
+    max-height: 400px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.icon-selector-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.icon-selector-header input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.icon-selector-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.icon-selector-close:hover {
+    background: var(--bg-light);
+    color: var(--text-dark);
+}
+
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    padding: 15px;
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+.icon-option {
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    color: var(--text-dark);
+}
+
+.icon-option:hover {
+    border-color: var(--primary-color);
+    background: rgba(255, 15, 34, 0.1);
+    transform: scale(1.1);
+}
+
+.icon-option i {
+    display: block;
+}
+
 .inline-form {
     display: flex;
     gap: 18px;
@@ -1317,6 +1445,17 @@ body {
     .form-row {
         grid-template-columns: 1fr;
         gap: 20px;
+    }
+    
+    .icon-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 10px;
+    }
+    
+    .icon-option {
+        padding: 10px;
+        font-size: 1rem;
     }
 
     .form-actions {

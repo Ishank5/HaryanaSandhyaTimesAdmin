@@ -304,8 +304,8 @@ async function handleArticleSubmit(e, isDraft = false) {
     const articleId = document.getElementById('articleId').value;
     const editMode = document.getElementById('editMode').value;
     
-    if (!title || !tagline || !genre || !content) {
-        alert('Please fill all required fields');
+    if (!title || !genre || !content) {
+        alert('Please fill all required fields (Title, Genre, and Content)');
         return;
     }
     
@@ -340,18 +340,12 @@ async function handleArticleSubmit(e, isDraft = false) {
             imageUrl = await uploadFile(currentImageFile, 'articles');
         }
         
-        // Check if we have an image
-        // Only require image for new articles; for edits, preserve existing image if no new one is selected
-        const hasExistingImage = editMode && existingData && existingData.imageUrl;
-        if (!imageUrl && !hasExistingImage) {
-            alert('Please select an image');
-            return;
-        }
-        
         // If editing and no new image selected, preserve existing image
         if (editMode && existingData && existingData.imageUrl && !imageUrl) {
             imageUrl = existingData.imageUrl;
         }
+        
+        // Image is optional - allow empty imageUrl
         
         // Upload NEW additional images if any (append to existing)
         const additionalImageFiles = document.getElementById('additionalImages').files;
@@ -364,12 +358,12 @@ async function handleArticleSubmit(e, isDraft = false) {
         
         const articleData = {
             title,
-            tagline,
+            tagline: tagline || '',
             genre,
             location: location || '',
             reporter: reporter || '',
             content,
-            imageUrl,
+            imageUrl: imageUrl || '',
             additionalImages,
             status: isDraft ? 'draft' : 'published',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -662,7 +656,8 @@ async function loadGenres() {
             const genre = doc.data();
             const div = document.createElement('div');
             div.className = 'genre-item';
-            const icon = getGenreIcon(genre.name);
+            // Use saved icon if available, otherwise auto-assign
+            const icon = genre.icon || getGenreIcon(genre.name);
             div.innerHTML = `
                 <div class="genre-info">
                     <i class="${icon}"></i>
@@ -679,15 +674,94 @@ async function loadGenres() {
     }
 }
 
+// Common Font Awesome icons for genre selection
+const commonIcons = [
+    'fas fa-newspaper', 'fas fa-globe', 'fas fa-bullhorn', 'fas fa-clock',
+    'fas fa-landmark', 'fas fa-vote-yea', 'fas fa-building',
+    'fas fa-football-ball', 'fas fa-baseball-ball', 'fas fa-futbol', 'fas fa-hockey-puck', 'fas fa-table-tennis',
+    'fas fa-film', 'fas fa-theater-masks', 'fas fa-music', 'fas fa-tv',
+    'fas fa-briefcase', 'fas fa-chart-line', 'fas fa-money-bill-wave', 'fas fa-chart-bar',
+    'fas fa-laptop', 'fas fa-microchip', 'fas fa-flask', 'fas fa-lightbulb',
+    'fas fa-heartbeat', 'fas fa-dumbbell', 'fas fa-spa', 'fas fa-tshirt', 'fas fa-utensils',
+    'fas fa-graduation-cap', 'fas fa-school', 'fas fa-university',
+    'fas fa-gavel', 'fas fa-balance-scale',
+    'fas fa-cloud-sun', 'fas fa-leaf', 'fas fa-tree',
+    'fas fa-map-marker-alt', 'fas fa-city',
+    'fas fa-monument', 'fas fa-users', 'fas fa-masks-theater', 'fas fa-torii-gate',
+    'fas fa-tractor', 'fas fa-seedling',
+    'fas fa-bus', 'fas fa-car',
+    'fas fa-book', 'fas fa-pen', 'fas fa-camera', 'fas fa-video', 'fas fa-microphone',
+    'fas fa-gamepad', 'fas fa-puzzle-piece', 'fas fa-star', 'fas fa-trophy',
+    'fas fa-shield-alt', 'fas fa-fire', 'fas fa-bolt', 'fas fa-gem'
+];
+
+// Initialize icon selector
+function initializeIconSelector() {
+    const iconGrid = document.getElementById('iconGrid');
+    if (!iconGrid) return;
+    
+    iconGrid.innerHTML = '';
+    commonIcons.forEach(icon => {
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'icon-option';
+        iconDiv.innerHTML = `<i class="${icon}"></i>`;
+        iconDiv.setAttribute('data-icon', icon);
+        iconDiv.onclick = () => selectIcon(icon);
+        iconGrid.appendChild(iconDiv);
+    });
+}
+
+function toggleIconSelector() {
+    const selector = document.getElementById('iconSelector');
+    const preview = document.getElementById('iconPreview');
+    
+    if (selector.style.display === 'none') {
+        selector.style.display = 'block';
+        if (!document.getElementById('iconGrid').innerHTML) {
+            initializeIconSelector();
+        }
+    } else {
+        selector.style.display = 'none';
+    }
+}
+
+function selectIcon(icon) {
+    document.getElementById('selectedIcon').value = icon;
+    const preview = document.getElementById('iconPreview');
+    const previewIcon = document.getElementById('selectedIconPreview');
+    
+    previewIcon.className = icon;
+    preview.style.display = 'inline-block';
+    
+    toggleIconSelector();
+}
+
+function filterIcons() {
+    const searchTerm = document.getElementById('iconSearch').value.toLowerCase();
+    const iconOptions = document.querySelectorAll('.icon-option');
+    
+    iconOptions.forEach(option => {
+        const icon = option.getAttribute('data-icon');
+        if (icon.toLowerCase().includes(searchTerm)) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+}
+
 async function handleGenreSubmit(e) {
     e.preventDefault();
     
     const name = document.getElementById('genreName').value;
+    const icon = document.getElementById('selectedIcon').value || getGenreIcon(name); // Use selected icon or auto-assign
     
     try {
-        await db.collection('genres').add({ name });
+        await db.collection('genres').add({ name, icon });
         alert('Genre added successfully!');
         document.getElementById('genreForm').reset();
+        document.getElementById('iconPreview').style.display = 'none';
+        document.getElementById('selectedIcon').value = '';
         loadGenres();
         loadGenresForSelect();
         loadDashboard();
@@ -1418,6 +1492,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     document.getElementById('genreForm').addEventListener('submit', handleGenreSubmit);
+    
+    // Initialize icon selector
+    initializeIconSelector();
+    
+    // Close icon selector when clicking outside
+    document.addEventListener('click', (e) => {
+        const selector = document.getElementById('iconSelector');
+        const btn = document.getElementById('iconSelectorBtn');
+        if (selector && !selector.contains(e.target) && !btn.contains(e.target)) {
+            selector.style.display = 'none';
+        }
+    });
     document.getElementById('settingsForm').addEventListener('submit', handleSettingsSubmit);
     
     // Live News
@@ -1433,6 +1519,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeVisitsModal').addEventListener('click', () => {
         document.getElementById('visitsModal').classList.remove('active');
     });
+    
+    // Add click handler for visits breakdown
+    const totalVisitsCard = document.getElementById('totalVisitsCard');
+    if (totalVisitsCard) {
+        totalVisitsCard.addEventListener('click', showVisitsBreakdown);
+    }
     
     window.onclick = (e) => {
         const cropModal = document.getElementById('cropModal');

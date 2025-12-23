@@ -150,7 +150,7 @@
                             <p>Genres</p>
                         </div>
                     </div>
-                    <div class="stat-card" id="totalVisitsCard" style="cursor: pointer;" onclick="showVisitsBreakdown()">
+                    <div class="stat-card" id="totalVisitsCard" style="cursor: pointer;">
                         <i class="fas fa-globe"></i>
                         <div class="stat-info">
                             <h3 id="totalVisits">0</h3>
@@ -175,8 +175,8 @@
 
                     <div class="form-row">
                         <div class="form-group full-width">
-                            <label>Tagline (Brief Description) *</label>
-                            <textarea id="articleTagline" rows="3" maxlength="300" required></textarea>
+                            <label>Tagline (Brief Description)</label>
+                            <textarea id="articleTagline" rows="3" maxlength="300"></textarea>
                             <small class="char-count"><span id="taglineCount">0</span>/300</small>
                         </div>
                     </div>
@@ -200,7 +200,7 @@
 
                     <div class="form-row">
                         <div class="form-group full-width">
-                            <label>Featured Image *</label>
+                            <label>Featured Image</label>
                             <input type="file" id="articleImage" accept="image/*" class="file-input">
                             <div id="imagePreview" class="image-preview">
                                 <img id="previewImg" src="" alt="Preview">
@@ -277,11 +277,35 @@
             <section id="genresSection" class="section">
                 <h2 class="page-title">Manage Genres</h2>
                 <div class="genre-manager">
-                    <form id="genreForm" class="inline-form">
-                        <input type="text" id="genreName" placeholder="Genre Name" required>
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-plus"></i> Add Genre
-                        </button>
+                    <form id="genreForm" class="genre-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <input type="text" id="genreName" placeholder="Genre Name" required>
+                            </div>
+                            <div class="form-group">
+                                <div class="icon-selector-wrapper">
+                                    <button type="button" class="icon-selector-btn" id="iconSelectorBtn" onclick="toggleIconSelector()">
+                                        <i class="fas fa-icons"></i> Select Icon
+                                    </button>
+                                    <div id="iconPreview" class="icon-preview" style="display: none;">
+                                        <i id="selectedIconPreview"></i>
+                                    </div>
+                                    <input type="hidden" id="selectedIcon" value="">
+                                </div>
+                                <div id="iconSelector" class="icon-selector" style="display: none;">
+                                    <div class="icon-selector-header">
+                                        <input type="text" id="iconSearch" placeholder="Search icons..." oninput="filterIcons()">
+                                        <button type="button" class="icon-selector-close" onclick="toggleIconSelector()">&times;</button>
+                                    </div>
+                                    <div class="icon-grid" id="iconGrid"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-plus"></i> Add Genre
+                                </button>
+                            </div>
+                        </div>
                     </form>
                     <div class="genres-list" id="genresList"></div>
                 </div>
