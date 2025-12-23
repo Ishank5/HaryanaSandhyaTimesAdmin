@@ -853,17 +853,34 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 15px;
 }
 
 .genre-info {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
 }
 
 .genre-info i {
     font-size: 1.5rem;
     color: var(--primary-color);
+}
+
+.genre-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.genre-actions .action-btn {
+    min-width: 38px;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Live News */

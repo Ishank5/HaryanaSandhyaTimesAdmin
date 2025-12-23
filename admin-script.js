@@ -658,22 +658,34 @@ async function loadGenres() {
             div.className = 'genre-item';
             // Use saved icon if available, otherwise auto-assign
             const icon = genre.icon || getGenreIcon(genre.name);
-            const iconEscaped = icon.replace(/"/g, '&quot;').replace(/'/g, "&#39;");
-            const nameEscaped = genre.name.replace(/"/g, '&quot;').replace(/'/g, "&#39;");
+            
             div.innerHTML = `
                 <div class="genre-info">
                     <i class="${icon}"></i>
                     <span>${genre.name}</span>
                 </div>
-                <div style="display: flex; gap: 5px;">
-                    <button class="action-btn edit" onclick="editGenre('${doc.id}', '${nameEscaped}', '${iconEscaped}')" title="Edit Icon">
+                <div class="genre-actions" style="display: flex; gap: 5px;">
+                    <button class="action-btn edit" data-genre-id="${doc.id}" data-genre-name="${genre.name}" data-genre-icon="${icon}" title="Edit Icon">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="action-btn delete" onclick="deleteGenre('${doc.id}')">
+                    <button class="action-btn delete" data-genre-id="${doc.id}" title="Delete Genre">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             `;
+            
+            // Add event listeners
+            const editBtn = div.querySelector('.action-btn.edit');
+            const deleteBtn = div.querySelector('.action-btn.delete');
+            
+            editBtn.addEventListener('click', () => {
+                editGenre(doc.id, genre.name, icon);
+            });
+            
+            deleteBtn.addEventListener('click', () => {
+                deleteGenre(doc.id);
+            });
+            
             container.appendChild(div);
         });
     } catch (error) {
