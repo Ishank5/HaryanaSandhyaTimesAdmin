@@ -215,11 +215,18 @@ async function loadDashboard() {
         const genresSnapshot = await db.collection('genres').get();
         document.getElementById('totalGenres').textContent = genresSnapshot.size;
         
-        // Load total website visits
+        // Load total website visits (calculate from date-wise data)
         const statsDoc = await db.collection('stats').doc('website').get();
         if (statsDoc.exists) {
             const stats = statsDoc.data();
-            const totalVisits = stats.totalVisits || 0;
+            const dailyVisits = stats.dailyVisits || {};
+            
+            // Calculate total from all dates
+            let totalVisits = 0;
+            Object.values(dailyVisits).forEach(count => {
+                totalVisits += count;
+            });
+            
             document.getElementById('totalVisits').textContent = totalVisits.toLocaleString();
         } else {
             document.getElementById('totalVisits').textContent = '0';
@@ -1142,6 +1149,95 @@ async function assignRandomLikes() {
     }
 }
 
+async function showVisitsBreakdown() {
+    try {
+        const modal = document.getElementById('visitsModal');
+        const modalBody = document.getElementById('visitsModalBody');
+        
+        modal.classList.add('active');
+        modalBody.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+        
+        const statsDoc = await db.collection('stats').doc('website').get();
+        
+        if (!statsDoc.exists) {
+            modalBody.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No visit data available yet.</div>';
+            return;
+        }
+        
+        const stats = statsDoc.data();
+        const dailyVisits = stats.dailyVisits || {};
+        
+        if (Object.keys(dailyVisits).length === 0) {
+            modalBody.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No visit data available yet.</div>';
+            return;
+        }
+        
+        // Convert to array and sort by date (newest first)
+        const visitsArray = Object.entries(dailyVisits).map(([date, count]) => ({
+            date,
+            count
+        }));
+        
+        visitsArray.sort((a, b) => {
+            return new Date(b.date) - new Date(a.date);
+        });
+        
+        // Calculate total
+        const total = visitsArray.reduce((sum, item) => sum + item.count, 0);
+        
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('en-IN', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'short'
+            });
+        }
+        
+        let html = `
+            <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-dark);">Total Visits: <strong>${total.toLocaleString()}</strong></h4>
+                <p style="margin: 0; color: var(--text-light); font-size: 0.9rem;">Showing ${visitsArray.length} day(s) of data</p>
+            </div>
+            <div style="max-height: 500px; overflow-y: auto;">
+                <table class="data-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Date</th>
+                            <th style="text-align: right;">Visits</th>
+                            <th style="text-align: right;">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        visitsArray.forEach(item => {
+            const percentage = total > 0 ? ((item.count / total) * 100).toFixed(1) : 0;
+            html += `
+                <tr>
+                    <td>${formatDate(item.date)}</td>
+                    <td style="text-align: right; font-weight: 600;">${item.count.toLocaleString()}</td>
+                    <td style="text-align: right; color: var(--text-light);">${percentage}%</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        modalBody.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading visits breakdown:', error);
+        document.getElementById('visitsModalBody').innerHTML = 
+            '<div style="text-align: center; padding: 40px; color: #dc3545;">Error loading visit data. Please try again.</div>';
+    }
+}
+
 async function assignRandomBoth() {
     if (!confirm('This will assign random views (100-500) and likes (1-100) to all articles that don\'t have these fields set. Continue?')) {
         return;
@@ -1334,14 +1430,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('viewModal').classList.remove('active');
     });
     
+    document.getElementById('closeVisitsModal').addEventListener('click', () => {
+        document.getElementById('visitsModal').classList.remove('active');
+    });
+    
     window.onclick = (e) => {
         const cropModal = document.getElementById('cropModal');
         const viewModal = document.getElementById('viewModal');
+        const visitsModal = document.getElementById('visitsModal');
         if (e.target === cropModal) {
             closeCropModal();
         }
         if (e.target === viewModal) {
             viewModal.classList.remove('active');
+        }
+        if (e.target === visitsModal) {
+            visitsModal.classList.remove('active');
         }
     };
 });

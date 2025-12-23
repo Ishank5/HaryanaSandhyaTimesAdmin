@@ -150,11 +150,11 @@
                             <p>Genres</p>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" id="totalVisitsCard" style="cursor: pointer;" onclick="showVisitsBreakdown()">
                         <i class="fas fa-globe"></i>
                         <div class="stat-info">
                             <h3 id="totalVisits">0</h3>
-                            <p>Total Website Visits</p>
+                            <p>Total Website Visits <small style="font-size: 0.7rem; opacity: 0.7;">(Click to view breakdown)</small></p>
                         </div>
                     </div>
                 </div>
@@ -411,6 +411,20 @@
                 <button class="modal-close" id="closeViewModal">&times;</button>
             </div>
             <div id="modalBody" class="modal-body"></div>
+        </div>
+    </div>
+
+    <div id="visitsModal" class="modal">
+        <div class="modal-content view-modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Website Visits - Date-wise Breakdown</h3>
+                <button class="modal-close" id="closeVisitsModal">&times;</button>
+            </div>
+            <div id="visitsModalBody" class="modal-body">
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                </div>
+            </div>
         </div>
     </div>
 

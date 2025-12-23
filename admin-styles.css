@@ -323,6 +323,21 @@ body {
     box-shadow: var(--shadow-hover);
 }
 
+#totalVisitsCard {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#totalVisitsCard:hover {
+    background: linear-gradient(135deg, rgba(255, 15, 34, 0.05), rgba(40, 39, 229, 0.05));
+    border: 2px solid rgba(255, 15, 34, 0.2);
+}
+
+#totalVisitsCard .stat-info p small {
+    display: block;
+    margin-top: 5px;
+}
+
 .stat-card i {
     font-size: 3rem;
     color: var(--primary-color);
