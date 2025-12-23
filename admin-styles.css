@@ -841,8 +841,8 @@ body {
 }
 
 .genres-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 15px;
 }
 
@@ -853,7 +853,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 0;
+    width: 100%;
 }
 
 .genre-info {
@@ -869,18 +870,23 @@ body {
 }
 
 .genre-actions {
-    display: flex;
+    display: flex !important;
     gap: 5px;
     align-items: center;
     flex-shrink: 0;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .genre-actions .action-btn {
     min-width: 38px;
     min-height: 38px;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+    cursor: pointer;
 }
 
 /* Live News */

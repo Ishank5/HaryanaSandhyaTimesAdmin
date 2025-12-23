@@ -659,32 +659,43 @@ async function loadGenres() {
             // Use saved icon if available, otherwise auto-assign
             const icon = genre.icon || getGenreIcon(genre.name);
             
-            div.innerHTML = `
-                <div class="genre-info">
-                    <i class="${icon}"></i>
-                    <span>${genre.name}</span>
-                </div>
-                <div class="genre-actions" style="display: flex; gap: 5px;">
-                    <button class="action-btn edit" data-genre-id="${doc.id}" data-genre-name="${genre.name}" data-genre-icon="${icon}" title="Edit Icon">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete" data-genre-id="${doc.id}" title="Delete Genre">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+            // Create genre info
+            const genreInfo = document.createElement('div');
+            genreInfo.className = 'genre-info';
+            genreInfo.innerHTML = `
+                <i class="${icon}"></i>
+                <span>${genre.name}</span>
             `;
             
-            // Add event listeners
-            const editBtn = div.querySelector('.action-btn.edit');
-            const deleteBtn = div.querySelector('.action-btn.delete');
+            // Create actions container
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'genre-actions';
             
+            // Create edit button
+            const editBtn = document.createElement('button');
+            editBtn.className = 'action-btn edit';
+            editBtn.title = 'Edit Icon';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
             editBtn.addEventListener('click', () => {
                 editGenre(doc.id, genre.name, icon);
             });
             
+            // Create delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'action-btn delete';
+            deleteBtn.title = 'Delete Genre';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
             deleteBtn.addEventListener('click', () => {
                 deleteGenre(doc.id);
             });
+            
+            // Append buttons to actions div
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            
+            // Append to main div
+            div.appendChild(genreInfo);
+            div.appendChild(actionsDiv);
             
             container.appendChild(div);
         });
